@@ -113,7 +113,7 @@ export default function Navbar() {
           <button
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Toggle menu"
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-xl"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-xl text-slate-900"
           >
             {mobileOpen ? "✕" : "☰"}
           </button>

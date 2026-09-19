@@ -5,17 +5,36 @@ import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const [cart, setCart] = useState([]);
+  const [settings, setSettings] = useState({});
   const router = useRouter();
 
   useEffect(() => {
     setCart(getCart());
+    // NOTE: this page used to hardcode a ₹40 delivery fee, completely
+    // disconnected from the delivery fee an admin actually sets in
+    // Settings — which is what checkout uses. That mismatch was
+    // confusing (cart said ₹40, checkout said FREE for the same order).
+    // Both pages now read the same value.
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => setSettings(data.settings || {}))
+      .catch(() => {});
   }, []);
 
   const refresh = () => setCart(getCart());
 
+  const currency = settings.currency_symbol || "₹";
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-  const delivery = cart.length ? 40 : 0;
+  const deliveryFee = Number(settings.delivery_fee || 0);
+  const freeDeliveryAbove = Number(settings.free_delivery_above || 0);
+  const delivery =
+    cart.length === 0
+      ? 0
+      : freeDeliveryAbove > 0 && subtotal >= freeDeliveryAbove
+        ? 0
+        : deliveryFee;
+
   const total = subtotal + delivery;
 
   if (cart.length === 0) {
@@ -92,7 +111,7 @@ export default function CartPage() {
                   </div>
                 )}
 
-                <p style={styles.price}>₹{item.price}</p>
+                <p style={styles.price}>{currency}{item.price}</p>
 
                 <div style={styles.qtyRow}>
                   <button
@@ -138,19 +157,19 @@ export default function CartPage() {
 
           <div style={styles.row}>
             <span>Subtotal</span>
-            <span>₹{subtotal}</span>
+            <span>{currency}{subtotal}</span>
           </div>
 
           <div style={styles.row}>
             <span>Delivery</span>
-            <span>₹{delivery}</span>
+            <span>{delivery === 0 ? "FREE" : `${currency}${delivery}`}</span>
           </div>
 
           <hr />
 
           <div style={{ ...styles.row, fontWeight: "bold" }}>
             <span>Total</span>
-            <span>₹{total}</span>
+            <span>{currency}{total}</span>
           </div>
 
           <button
@@ -183,7 +202,11 @@ const styles = {
 
   container: {
     display: "grid",
-    gridTemplateColumns: "2fr 1fr",
+    // Column widths are set purely by the .cart-container CSS class /
+    // media query below — this used to also be set inline right here,
+    // which silently overrode the responsive class every time (inline
+    // styles always beat class-based CSS, media query or not), so the
+    // "responsive" fix never actually did anything.
     gap: "30px",
     maxWidth: "1100px",
     margin: "auto",

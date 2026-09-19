@@ -12,12 +12,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* NOTE: this file used to also flip --foreground to a near-white color
+   under `@media (prefers-color-scheme: dark)`. Nothing else in this app
+   (cards, inputs, buttons) switches to a dark background to match, so on
+   any phone with system dark mode on, text rendered near-white on a
+   still-white background — completely invisible. This app isn't built
+   with a real dark theme, so we keep the foreground color fixed instead
+   of half-switching it. */
 
 body {
   background: var(--background);
